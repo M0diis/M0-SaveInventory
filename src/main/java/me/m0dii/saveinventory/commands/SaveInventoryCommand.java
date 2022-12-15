@@ -3,6 +3,7 @@ package me.m0dii.saveinventory.commands;
 import me.m0dii.saveinventory.SaveInventory;
 import me.m0dii.saveinventory.utils.InventoryHandler;
 import me.m0dii.saveinventory.utils.Utils;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,6 +16,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class SaveInventoryCommand implements CommandExecutor, TabCompleter {
     private final InventoryHandler handler = InventoryHandler.getInstance();
@@ -63,6 +65,20 @@ public class SaveInventoryCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if(player.hasPermission("saveinventory.command.clear") && isArgument(0, args, "clear")) {
+            if(args.length == 2) {
+                handler.clearStorage(player, player.getWorld(), args[1], true);
+
+                sender.sendMessage(Utils.format(cfg.getString("messages.storage-cleared")));
+            } else {
+                handler.clearStorage(player, player.getWorld(), "default", true);
+
+                sender.sendMessage(Utils.format(cfg.getString("messages.storage-cleared")));
+            }
+
+            return true;
+        }
+
         if(player.hasPermission("saveinventory.save.multiple") && args.length == 1
             && !isArgument(0, args, "preview", "clear", "reload")) {
             String position = args[0];
@@ -87,8 +103,18 @@ public class SaveInventoryCommand implements CommandExecutor, TabCompleter {
         List<String> completes = new ArrayList<>();
 
         if(args.length == 1) {
-            completes.add("reload");
-            completes.add("preview");
+            Stream.of("preview", "clear", "reload")
+                    .filter(s -> StringUtils.startsWithIgnoreCase(s, args[0]))
+                    .forEach(completes::add);
+        }
+
+        if(sender instanceof Player player) {
+            if(args.length == 2 && isArgument(0, args, "preview", "clear")) {
+                handler.getSavedInventories(player, player.getWorld())
+                        .stream()
+                        .filter(s -> StringUtils.startsWithIgnoreCase(s, args[1]))
+                        .forEach(completes::add);
+            }
         }
 
         return completes;

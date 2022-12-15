@@ -5,10 +5,15 @@ import me.m0dii.saveinventory.SaveInventory;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class InventoryHandler extends AbstractFile {
     private static InventoryHandler instance;
@@ -69,19 +74,21 @@ public class InventoryHandler extends AbstractFile {
 
         player.updateInventory();
 
-        // (inventory contents indexes 0 - 35, armor 36 - 39, offhand - 40)
-        if(inventory.length != 0) {
-            for (int i = 0; i < 36; i++) {
-                player.getInventory().setItem(i, inventory[i]);
-            }
-
-            player.getInventory().setHelmet(inventory[39]);
-            player.getInventory().setChestplate(inventory[38]);
-            player.getInventory().setLeggings(inventory[37]);
-            player.getInventory().setBoots(inventory[36]);
-
-            player.getInventory().setItemInOffHand(inventory[40]);
+        if (inventory.length == 0) {
+            return false;
         }
+
+        // (inventory contents indexes 0 - 35, armor 36 - 39, offhand - 40)
+        for (int i = 0; i < 36; i++) {
+            player.getInventory().setItem(i, inventory[i]);
+        }
+
+        player.getInventory().setHelmet(inventory[39]);
+        player.getInventory().setChestplate(inventory[38]);
+        player.getInventory().setLeggings(inventory[37]);
+        player.getInventory().setBoots(inventory[36]);
+
+        player.getInventory().setItemInOffHand(inventory[40]);
 
         clearStorage(player, world, position);
 
@@ -184,5 +191,21 @@ public class InventoryHandler extends AbstractFile {
         }
 
         this.save();
+    }
+
+    public List<String> getSavedInventories(Player player, World world) {
+        ConfigurationSection section;
+
+        if(plugin.getCfg().getBoolean("per-world-save")) {
+            section = this.fileCfg.getConfigurationSection("inventories.%s.%s".formatted(player.getUniqueId(), world.getName().toLowerCase()));
+        } else {
+            section = this.fileCfg.getConfigurationSection("inventories.%s".formatted(player.getUniqueId()));
+        }
+
+        if(section == null) {
+            return Collections.emptyList();
+        }
+
+        return section.getKeys(false).stream().map(String::toLowerCase).collect(Collectors.toList());
     }
 }
