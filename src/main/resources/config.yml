@@ -8,6 +8,8 @@ messages:
   inventory-saved-death: "&aYou have died, but your inventory has been saved. Restore it using &2/restoreinventory&a."
   inventory-saved-world-change: "&aYou have changed worlds and your inventory has been saved. Restore it using &2/restoreinventory&a."
   inventory-restored-world-change: "&aYou have changed worlds and your inventory has been restored."
+  invalid-storage-id: "&cStorage ID must be from 1 to 9."
+  storage-cleared: "&aSuccessfully cleared your storage."
 
 clear-on-save: true # Permission: saveinventory.save.clear
 save-on-death: true # Permission: saveinventory.save.death

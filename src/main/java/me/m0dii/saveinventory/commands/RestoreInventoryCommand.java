@@ -1,5 +1,6 @@
 package me.m0dii.saveinventory.commands;
 
+import me.m0dii.pllib.utils.NumberUtils;
 import me.m0dii.saveinventory.SaveInventory;
 import me.m0dii.saveinventory.utils.InventoryHandler;
 import me.m0dii.saveinventory.utils.Utils;
@@ -13,6 +14,7 @@ import org.bukkit.entity.Player;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RestoreInventoryCommand implements CommandExecutor, TabCompleter {
@@ -28,6 +30,20 @@ public class RestoreInventoryCommand implements CommandExecutor, TabCompleter {
 
     public boolean onCommand(@Nonnull CommandSender sender, @Nonnull Command cmd,
                              @Nonnull String label, @Nonnull String[] args) {
+        if(isArgument(0, args, "reload")) {
+            if(!sender.hasPermission("saveinventory.command.reload")) {
+                sender.sendMessage(Utils.format(cfg.getString("messages.no-permission")));
+
+                return true;
+            }
+
+            plugin.getConfigManager().reloadConfig();
+
+            sender.sendMessage(Utils.format(cfg.getString("messages.reloaded")));
+
+            return true;
+        }
+
         if (!(sender instanceof Player player)) {
             sender.sendMessage(ChatColor.RED + "Console cannot perform this command.");
             return true;
@@ -40,18 +56,56 @@ public class RestoreInventoryCommand implements CommandExecutor, TabCompleter {
         }
 
         if(player.hasPermission("saveinventory.command.preview") && isArgument(0, args, "preview")) {
-            handler.previewInventory(player);
+            if(args.length == 2) {
+                handler.previewInventory(player, player.getWorld(), args[1]);
+            } else {
+                handler.previewInventory(player);
+            }
 
             return true;
         }
 
-        boolean result = handler.restoreInventory(player);
+        if(player.hasPermission("saveinventory.command.clear") && isArgument(0, args, "clear")) {
+            if(args.length == 2) {
+                if(!NumberUtils.isDigit(args[1])) {
+                    sender.sendMessage(Utils.format(cfg.getString("messages.invalid-storage-id")));
 
-        if(result) {
-            player.sendMessage(Utils.format(cfg.getString("messages.restored")));
-        } else {
-            player.sendMessage(Utils.format(cfg.getString("messages.no-inventory-restore")));
+                    return true;
+                }
+
+                handler.clearStorage(player, player.getWorld(), args[1], true);
+
+                sender.sendMessage(Utils.format(cfg.getString("messages.storage-cleared")));
+            } else {
+                handler.clearStorage(player, player.getWorld(), "default", true);
+
+                sender.sendMessage(Utils.format(cfg.getString("messages.storage-cleared")));
+            }
+
+            return true;
         }
+
+        if(args.length == 1 && !isArgument(0, args, "preview", "clear")) {
+            boolean result = handler.restoreInventory(player, player.getWorld(), args[0]);
+
+            if(result) {
+                player.sendMessage(Utils.format(cfg.getString("messages.restored")));
+            } else {
+                player.sendMessage(Utils.format(cfg.getString("messages.no-inventory-restore")));
+            }
+
+            return true;
+        } else {
+            boolean result = handler.restoreInventory(player);
+
+            if(result) {
+                player.sendMessage(Utils.format(cfg.getString("messages.restored")));
+            } else {
+                player.sendMessage(Utils.format(cfg.getString("messages.no-inventory-restore")));
+            }
+        }
+
+
 
         return true;
     }
@@ -68,11 +122,11 @@ public class RestoreInventoryCommand implements CommandExecutor, TabCompleter {
         return completes;
     }
 
-    private boolean isArgument(int index, String[] args, String argument) {
+    private boolean isArgument(int index, String[] args, String... argument) {
         if(args.length == 0 || args.length < index) {
             return false;
         }
 
-        return args[index].equalsIgnoreCase(argument);
+        return Arrays.stream(argument).anyMatch(arg -> args[index].equalsIgnoreCase(arg));
     }
 }

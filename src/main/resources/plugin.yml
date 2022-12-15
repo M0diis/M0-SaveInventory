@@ -1,7 +1,7 @@
 main: me.m0dii.saveinventory.SaveInventory
 name: SaveInventory
 author: M0dii
-version: 1.1.0
+version: ${version}
 api-version: 1.16
 commands:
   saveinventory:

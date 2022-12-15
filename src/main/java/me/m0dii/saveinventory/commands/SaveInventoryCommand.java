@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SaveInventoryCommand implements CommandExecutor, TabCompleter {
@@ -52,6 +53,27 @@ public class SaveInventoryCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if(player.hasPermission("saveinventory.command.preview") && isArgument(0, args, "preview")) {
+            if(args.length == 2) {
+                handler.previewInventory(player, player.getWorld(), args[1]);
+            } else {
+                handler.previewInventory(player);
+            }
+
+            return true;
+        }
+
+        if(player.hasPermission("saveinventory.save.multiple") && args.length == 1
+            && !isArgument(0, args, "preview", "clear", "reload")) {
+            String position = args[0];
+
+            handler.saveInventory(player, player.getWorld(), position);
+
+            player.sendMessage(Utils.format(cfg.getString("messages.saved")));
+
+            return true;
+        }
+
         handler.saveInventory(player);
 
         player.sendMessage(Utils.format(cfg.getString("messages.saved")));
@@ -66,17 +88,18 @@ public class SaveInventoryCommand implements CommandExecutor, TabCompleter {
 
         if(args.length == 1) {
             completes.add("reload");
+            completes.add("preview");
         }
 
         return completes;
     }
 
 
-    private boolean isArgument(int index, String[] args, String argument) {
+    private boolean isArgument(int index, String[] args, String... argument) {
         if(args.length == 0 || args.length < index) {
             return false;
         }
 
-        return args[index].equalsIgnoreCase(argument);
+        return Arrays.stream(argument).anyMatch(arg -> args[index].equalsIgnoreCase(arg));
     }
 }

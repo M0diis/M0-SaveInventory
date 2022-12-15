@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'me.m0dii'
-version '1.1.0'
+version '1.2.0'
 
 archivesBaseName = 'M0-SaveInventory'
 
@@ -13,6 +13,14 @@ shadowJar {
     minimize()
 
     archiveFileName = "M0-SaveInventory-${version}.jar"
+}
+
+processResources {
+    eachFile {
+        if (file.name.endsWith(".yml")) {
+            expand version: version
+        }
+    }
 }
 
 repositories {
